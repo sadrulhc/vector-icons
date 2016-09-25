@@ -1,3 +1,5 @@
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
 function notimplemented(msg) {
   console.log('notimplemented(vector-icon): ' + msg);
 }
@@ -13,7 +15,7 @@ class VectorIcon {
 
   paint(container) {
     var ncmds = this.commands_.length;
-    this.svg_ = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    this.svg_ = document.createElementNS(SVG_NS, 'svg');
     this.svg_.setAttribute('width', '26');
     this.svg_.setAttribute('height', '26');
     this.svg_.setAttribute('fill-rule', 'evenodd');
@@ -22,6 +24,7 @@ class VectorIcon {
     this.paths_ = [];
     this.currentPath_ = this.createPath();
     this.pathD_ = [];
+    this.clipRect_ = null;
     for (var i = 0; i < ncmds; ++i) {
       if (this.commands_[i][0] == 'END')
         break;
@@ -29,6 +32,27 @@ class VectorIcon {
     }
     if (this.pathD_.length > 0)
       this.currentPath_.setAttribute('d', this.pathD_.join(' '));
+
+    // Just set the clip-path on all paths, I guess?
+    if (this.clipRect_) {
+      var clipPath = document.createElementNS(SVG_NS, 'clipPath');
+      clipPath.setAttribute('id', 'clip-path');
+      this.svg_.appendChild(clipPath);
+
+      var rect = document.createElementNS(SVG_NS, 'rect');
+      rect.setAttribute('x', this.clipRect_[0]);
+      rect.setAttribute('y', this.clipRect_[1]);
+      rect.setAttribute('width', this.clipRect_[2]);
+      rect.setAttribute('height', this.clipRect_[3]);
+      clipPath.appendChild(rect);
+
+      this.paths_.forEach(
+          path => path.setAttribute('clip-path', 'url(#clip-path)')
+      );
+    }
+
+    var svg = this.svg_;
+    this.paths_.forEach(path => svg.appendChild(path));
   }
 
   createPath() {
@@ -36,14 +60,13 @@ class VectorIcon {
       this.currentPath_.setAttribute('d', this.pathD_.join(' '));
       this.pathD_ = [];
     }
-    var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    var path = document.createElementNS(SVG_NS, 'path');
     path.setAttribute('fill', 'gray');
     path.setAttribute('stroke', 'gray');
     path.setAttribute('stroke-width', '1px');
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('shape-rendering', 'geometricPrecision');
     this.paths_.push(path);
-    this.svg_.appendChild(path);
     return path;
   }
 
@@ -89,7 +112,12 @@ class VectorIcon {
       return;
     }
 
-    // TODO: CIRCLE, ROUND_RECT, CLIP
+    if (cmd[0] == 'CLIP') {
+      this.clipRect_ = cmd.splice(1).map(x => x.trim() + 'px');
+      return;
+    }
+
+    // TODO: CIRCLE, ROUND_RECT
 
     var drawCommands = {
       'MOVE_TO': 'M',
