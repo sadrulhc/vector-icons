@@ -7,24 +7,22 @@ function notimplemented(msg) {
 class VectorIcon {
   constructor(commands) {
     this.commands_ = commands;
-    this.lastCommand_ = undefined;
-    this.canvas_ = null;
-    this.ctx_ = null;
-    this.lastPoint_ = [0, 0];
+    this.svg_ = null;
+    this.paths_ = [];
+    this.currentPath_ = null;
+    this.pathD_ = [];
+    this.clipRect_ = null;
   }
 
   paint(container) {
     var ncmds = this.commands_.length;
     this.svg_ = document.createElementNS(SVG_NS, 'svg');
-    this.svg_.setAttribute('width', '26');
-    this.svg_.setAttribute('height', '26');
+    this.svg_.setAttribute('width', '48');
+    this.svg_.setAttribute('height', '48');
     this.svg_.setAttribute('fill-rule', 'evenodd');
     this.svg_.classList.add('vector-svg');
     container.appendChild(this.svg_);
-    this.paths_ = [];
     this.currentPath_ = this.createPath();
-    this.pathD_ = [];
-    this.clipRect_ = null;
     for (var i = 0; i < ncmds; ++i) {
       if (this.commands_[i][0] == 'END')
         break;
@@ -51,6 +49,7 @@ class VectorIcon {
       );
     }
 
+    // Add all the paths.
     var svg = this.svg_;
     this.paths_.forEach(path => svg.appendChild(path));
   }
