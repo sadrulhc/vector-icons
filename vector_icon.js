@@ -1,4 +1,6 @@
-function notimplemented(msg) { console.log('notimplemented: ' + msg); }
+function notimplemented(msg) {
+  console.log('notimplemented(vector-icon): ' + msg);
+}
 
 class VectorIcon {
   constructor(commands) {
@@ -14,13 +16,17 @@ class VectorIcon {
     this.svg_ = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     this.svg_.setAttribute('width', '26');
     this.svg_.setAttribute('height', '26');
+    this.svg_.setAttribute('fill-rule', 'evenodd');
     this.svg_.classList.add('vector-svg');
     container.appendChild(this.svg_);
     this.paths_ = [];
     this.currentPath_ = this.createPath();
     this.pathD_ = [];
-    for (var i = 0; i < ncmds; ++i)
+    for (var i = 0; i < ncmds; ++i) {
+      if (this.commands_[i][0] == 'END')
+        break;
       this.processCommand(this.commands_[i]);
+    }
     if (this.pathD_.length > 0)
       this.currentPath_.setAttribute('d', this.pathD_.join(' '));
   }
@@ -31,11 +37,11 @@ class VectorIcon {
       this.pathD_ = [];
     }
     var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('stroke-width', '1');
+    path.setAttribute('fill', 'gray');
     path.setAttribute('stroke', 'gray');
+    path.setAttribute('stroke-width', '1px');
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('shape-rendering', 'geometricPrecision');
-    path.setAttribute('fill', 'transparent');
     this.paths_.push(path);
     this.svg_.appendChild(path);
     return path;
@@ -54,19 +60,22 @@ class VectorIcon {
     }
 
     if (cmd[0] == 'PATH_COLOR_ARGB') {
-      this.currentPath_.style['stroke'] = 'red';  // XXX:
-      notimplemented('color not set correctly');
+      var color =
+          'rgba(' + [cmd[2], cmd[3], cmd[4], cmd[1]]
+              .map(x => parseInt(x)).join(',') + ')';
+      this.currentPath_.style['fill'] = color;
+      this.currentPath_.style['stroke'] = color;
       return;
     }
 
     if (cmd[0] == 'PATH_MODE_CLEAR') {
-      // XXX:
+      // XXX: what do?
       notimplemented(cmd[0]);
       return;
     }
 
     if (cmd[0] == 'STROKE') {
-      this.currentPath_.style['stroke-width'] = cmd[1] + 'px';
+      this.currentPath_.setAttribute('stroke-width', cmd[1] + 'px');
       return;
     }
 
@@ -74,6 +83,13 @@ class VectorIcon {
       this.currentPath_.style['stroke-linecap'] = 'square';
       return;
     }
+
+    if (cmd[0] == 'DISABLE_AA') {
+      this.currentPath_.setAttribute('shape-rendering', 'crispEdges');
+      return;
+    }
+
+    // TODO: CIRCLE, ROUND_RECT, CLIP
 
     var drawCommands = {
       'MOVE_TO': 'M',
@@ -96,6 +112,8 @@ class VectorIcon {
       this.pathD_.push(nc.join(' '));
       return;
     }
+
+    notimplemented(cmd.join(','));
   }
 };
 
@@ -103,10 +121,11 @@ function updatePreviewIfVectorIcon(source_code) {
   if (!window.location.pathname.endsWith('.icon'))
     return;
   var inp = source_code.textContent;
-  var lines = inp.split('\n');
-  var commands = lines.map(function(line) {
-    return line.trim().split(',').filter(function(x) {return x.length > 0;});
-  });
+  var lines = inp.split('\n').filter(
+    line => (line.length && !line.startsWith('//'))
+  );
+  var commands =
+      lines.map(line => line.trim().split(',').filter(x => x.length > 0));
 
   var icon = new VectorIcon(commands);
   icon.paint(source_code.parentNode.querySelectorAll('.preview-container')[0]);
@@ -120,17 +139,9 @@ function setUpPreviewPanel(source_code) {
   div.classList.add('preview-panel');
   source_code.parentNode.insertBefore(div, source_code.nextElementSibling);
   
-  var button = document.createElement('button');
-  button.textContent = 'Preview';
-  // div.appendChild(button);
-
   var container = document.createElement('div');
   container.classList.add('preview-container');
   div.appendChild(container);
-
-  button.onclick = function() {
-    updatePreviewIfVectorIcon(source_code);
-  };
 
   var observer = new MutationObserver(function(mutations) {
     container.innerHTML = '';
