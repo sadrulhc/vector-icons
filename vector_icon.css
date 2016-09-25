@@ -1,9 +1,13 @@
 .vector-svg {
-  transform: scale(5);
+  transform: scale(1);
   transform-origin: 0 0 0;
 
   border: 1px solid rgba(0, 0, 0, 0.1);
   margin: 20px;
+}
+
+.vector-large {
+  transform: scale(4);
 }
 
 .preview-panel {

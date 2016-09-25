@@ -21,7 +21,6 @@ class VectorIcon {
     this.svg_.setAttribute('height', '48');
     this.svg_.setAttribute('fill-rule', 'evenodd');
     this.svg_.classList.add('vector-svg');
-    container.appendChild(this.svg_);
     this.currentPath_ = this.createPath();
     for (var i = 0; i < ncmds; ++i) {
       if (this.commands_[i][0] == 'END')
@@ -52,6 +51,12 @@ class VectorIcon {
     // Add all the paths.
     var svg = this.svg_;
     this.paths_.forEach(path => svg.appendChild(path));
+
+    container.appendChild(this.svg_);
+    container.appendChild(document.createElement('br'));
+    var large = this.svg_.cloneNode(true);
+    large.classList.add('vector-large');
+    container.appendChild(large);
   }
 
   closeCurrentPath() {
