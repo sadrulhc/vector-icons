@@ -1,0 +1,8 @@
+.vector-svg {
+  transform: scale(5);
+  transform-origin: 0 0 0;
+}
+
+.preview-panel {
+  width: 200px;
+}

@@ -1,0 +1,13 @@
+{
+   "version": "0.1",
+   "content_scripts": [ {
+     "css": [ "vector_icon.css" ],
+      "js": [ "vector_icon.js" ],
+      "matches": [ "*://cs.chromium.org/*" ],
+      "run_at": "document_end"
+   } ],
+   "description": "Draws vector icons in chromium repo.",
+   "manifest_version": 2,
+   "name": "Vector Icon Painter",
+   "permissions": [ "*://cs.chromium.org/*" ]
+}
