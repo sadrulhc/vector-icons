@@ -193,10 +193,10 @@ class VectorIcon {
   }
 };
 
-function updatePreviewIfVectorIcon(source_code) {
+function updatePreviewIfVectorIcon(source_code, functor) {
   if (!window.location.pathname.endsWith('.icon'))
     return;
-  var inp = source_code.textContent;
+  var inp = functor(source_code);
   var lines = inp.split('\n').filter(
     line => (line.length && !line.startsWith('//'))
   );
@@ -207,7 +207,7 @@ function updatePreviewIfVectorIcon(source_code) {
   icon.paint(source_code.parentNode.querySelectorAll('.preview-container')[0]);
 }
 
-function setUpPreviewPanel(source_code) {
+function setUpPreviewPanel(source_code, functor) {
   if (!source_code)
     return;
 
@@ -218,23 +218,26 @@ function setUpPreviewPanel(source_code) {
   var container = document.createElement('div');
   container.classList.add('preview-container');
   div.appendChild(container);
+  updatePreviewIfVectorIcon(source_code, functor);
 
   var observer = new MutationObserver(function(mutations) {
     container.innerHTML = '';
-    updatePreviewIfVectorIcon(source_code);
+    updatePreviewIfVectorIcon(source_code, functor);
   });
   observer.observe(source_code, { childList: true });
 }
 
-setUpPreviewPanel(document.getElementById('source_code'));
+function setUpExtension(selector, functor) {
+  setUpPreviewPanel(document.querySelector(selector), functor);
 
-// Make sure to set up a preview panel for any |source_code| panel that gets
-// added.
-var observer = new MutationObserver(function(mutations) {
-	mutations.forEach(function(mutation) {
-		for (var i = 0; i < mutation.addedNodes.length; i++)
-			if (mutation.addedNodes[i].id == 'source_code')
-        setUpPreviewPanel(mutation.addedNodes[i]);
-	});
-});
-observer.observe(document, { childList: true, subtree: true });
+  // Make sure to set up a preview panel for any |source_code| panel that gets
+  // added.
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      for (var i = 0; i < mutation.addedNodes.length; i++)
+        if (mutation.addedNodes[i].id == 'source_code')
+          setUpPreviewPanel(mutation.addedNodes[i], functor);
+    });
+  });
+  observer.observe(document, { childList: true, subtree: true });
+}

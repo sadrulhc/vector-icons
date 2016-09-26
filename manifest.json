@@ -2,12 +2,20 @@
    "version": "0.1",
    "content_scripts": [ {
      "css": [ "vector_icon.css" ],
-      "js": [ "vector_icon.js" ],
-      "matches": [ "*://cs.chromium.org/*" ],
-      "run_at": "document_end"
+     "js": [ "vector_icon.js", "cs.js" ],
+     "matches": [ "*://cs.chromium.org/*" ],
+     "run_at": "document_end"
+   }, {
+     "css": [ "vector_icon.css" ],
+     "js": [ "vector_icon.js", "gitiles.js" ],
+     "matches": [ "*://chromium.googlesource.com/chromium/src/*" ],
+     "run_at": "document_end"
    } ],
    "description": "Draws vector icons in chromium repo.",
    "manifest_version": 2,
    "name": "Vector Icon Painter",
-   "permissions": [ "*://cs.chromium.org/*" ]
+   "permissions": [
+     "*://cs.chromium.org/*",
+     "*://chromium.googlesource.com/chromium/src/*"
+   ]
 }
