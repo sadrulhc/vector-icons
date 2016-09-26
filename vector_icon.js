@@ -65,6 +65,7 @@ class VectorIcon {
     if (this.currentPath_) {
       this.currentPath_.setAttribute('d', this.pathD_.join(' '));
       this.pathD_ = [];
+      this.currentPath_ = null;
     }
   }
 
@@ -73,7 +74,7 @@ class VectorIcon {
     var path = document.createElementNS(SVG_NS, 'path');
     path.setAttribute('fill', 'gray');
     path.setAttribute('stroke', 'gray');
-    path.setAttribute('stroke-width', '1px');
+    path.setAttribute('stroke-width', '0px');
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('shape-rendering', 'geometricPrecision');
     this.paths_.push(path);
@@ -81,27 +82,32 @@ class VectorIcon {
   }
 
   createCircle(params) {
-    this.closeCurrentPath();
-    var path = document.createElementNS(SVG_NS, 'circle');
-    path.setAttribute('cx', parseFloat(params[0]));
-    path.setAttribute('cy', parseFloat(params[1]));
-    path.setAttribute('r', parseFloat(params[2]));
-    path.setAttribute('fill', 'gray');
-    this.paths_.push(path);
-    return path;
+    var cx = parseFloat(params[0]);
+    var cy = parseFloat(params[1]);
+    var r = parseFloat(params[2]);
+    var cmds = [
+      ['M', cx, cy],
+      ['m', -r, '0'],
+      ['a', r, r, 0, 1, 0, r*2, 0],
+      ['a', r, r, 0, 1, 0, -r*2, 0],
+    ];
+    cmds.forEach(cmd => this.pathD_.push(cmd.join(' ')));
   }
 
   createRoundRect(params) {
-    this.closeCurrentPath();
-    var path = document.createElementNS(SVG_NS, 'rect');
-    path.setAttribute('x', parseFloat(params[0]));
-    path.setAttribute('y', parseFloat(params[1]));
-    path.setAttribute('width', parseFloat(params[2]));
-    path.setAttribute('height', parseFloat(params[3]));
-    path.setAttribute('rx', parseFloat(params[4]));
-    path.setAttribute('fill', 'gray');
-    this.paths_.push(path);
-    return path;
+    var x = parseFloat(params[0]);
+    var y = parseFloat(params[1]);
+    var width = parseFloat(params[2]);
+    var height = parseFloat(params[3]);
+    var rx = parseFloat(params[4]);  // XXX: unused
+    var cmds = [
+      ['M', x, y],
+      ['h', width],
+      ['v', height],
+      ['h', -width],
+      ['v', -height]
+    ];
+    cmds.forEach(cmd => this.pathD_.push(cmd.join(' ')));
   }
 
   processCommand(cmd) {
@@ -152,12 +158,12 @@ class VectorIcon {
     }
 
     if (cmd[0] == 'CIRCLE') {
-      this.currentPath_ = this.createCircle(cmd.splice(1));
+      this.createCircle(cmd.splice(1));
       return;
     }
 
     if (cmd[0] == 'ROUND_RECT') {
-      this.currentPath_ = this.createRoundRect(cmd.splice(1));
+      this.createRoundRect(cmd.splice(1));
       return;
     }
 
