@@ -1,14 +1,26 @@
 // See LICENSE
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const SCALE = 4;
 
 function notimplemented(msg) {
   console.log('notimplemented(vector-icon): ' + msg);
 }
 
+class ExtensionDelegate {
+  // Extracts text content from |node|. The returned text content should be
+  // the contents of the .icon file.
+  extractTextContent(node) { return ''; }
+
+  // Returns the svg element when it's created. The delegate can choose to
+  // embed it where it wants.
+  onPanelCreated(panel) {}
+};
+
 class VectorIcon {
-  constructor(commands) {
+  constructor(commands, delegate) {
     this.commands_ = commands;
+    this.delegate_ = delegate;
     this.svg_ = null;
     this.paths_ = [];
     this.currentPath_ = null;
@@ -16,7 +28,7 @@ class VectorIcon {
     this.clipRect_ = null;
   }
 
-  paint(container) {
+  paint() {
     var ncmds = this.commands_.length;
     this.svg_ = document.createElementNS(SVG_NS, 'svg');
     this.svg_.setAttribute('width', '48');
@@ -53,12 +65,7 @@ class VectorIcon {
     // Add all the paths.
     var svg = this.svg_;
     this.paths_.forEach(path => svg.appendChild(path));
-
-    container.appendChild(this.svg_);
-    container.appendChild(document.createElement('br'));
-    var large = this.svg_.cloneNode(true);
-    large.classList.add('vector-large');
-    container.appendChild(large);
+    return this.svg_;
   }
 
   closeCurrentPath() {
@@ -198,10 +205,15 @@ class VectorIcon {
   }
 };
 
-function updatePreviewIfVectorIcon(source_code, functor) {
-  if (!window.location.pathname.endsWith('.icon'))
+function updatePreviewIfVectorIcon(source_code, delegate, container) {
+  if (!window.location.pathname.endsWith('.icon')) {
+    if (container.parentNode)
+      container.parentNode.removeChild(container);
     return;
-  var inp = functor(source_code);
+  }
+  container.style.disply = 'flex';
+  delegate.onPanelCreated(container);
+  var inp = delegate.extractTextContent(source_code);
   var lines = inp.split('\n').filter(
     line => (line.length && !line.startsWith('//'))
   );
@@ -209,31 +221,46 @@ function updatePreviewIfVectorIcon(source_code, functor) {
       lines.map(line => line.trim().split(',').filter(x => x.length > 0));
 
   var icon = new VectorIcon(commands);
-  icon.paint(source_code.parentNode.querySelectorAll('.preview-container')[0]);
+  var svg = icon.paint();
+
+  var original = container.querySelector('#preview-original');
+  original.innerHTML = '';
+  original.appendChild(svg);
+
+  var scaled = container.querySelector('#preview-scaled');
+  scaled.innerHTML = '';
+  var scaledSvg = svg.cloneNode(true);
+  scaledSvg.setAttribute('width',
+      parseFloat(svg.getAttribute('width')) * SCALE);
+  scaledSvg.setAttribute('height',
+      parseFloat(svg.getAttribute('height')) * SCALE);
+  scaled.appendChild(scaledSvg);
 }
 
-function setUpPreviewPanel(source_code, functor) {
+function setUpPreviewPanel(source_code, delegate) {
   if (!source_code)
     return;
 
-  var div = document.createElement('div');
-  div.classList.add('preview-panel');
-  source_code.parentNode.insertBefore(div, source_code.nextElementSibling);
-  
   var container = document.createElement('div');
-  container.classList.add('preview-container');
-  div.appendChild(container);
-  updatePreviewIfVectorIcon(source_code, functor);
+  container.id = 'preview-container';
+
+  var orig = document.createElement('div');
+  orig.id = 'preview-original';
+  container.appendChild(orig);
+
+  var scaled = document.createElement('div');
+  scaled.id = 'preview-scaled';
+  container.appendChild(scaled);
+  updatePreviewIfVectorIcon(source_code, delegate, container);
 
   var observer = new MutationObserver(function(mutations) {
-    container.innerHTML = '';
-    updatePreviewIfVectorIcon(source_code, functor);
+    updatePreviewIfVectorIcon(source_code, delegate, container);
   });
   observer.observe(source_code, { childList: true });
 }
 
-function setUpExtension(selector, functor) {
-  setUpPreviewPanel(document.querySelector(selector), functor);
+function setUpExtension(selector, delegate) {
+  setUpPreviewPanel(document.querySelector(selector), delegate);
 
   // Make sure to set up a preview panel for any |source_code| panel that gets
   // added.
@@ -241,7 +268,7 @@ function setUpExtension(selector, functor) {
     mutations.forEach(function(mutation) {
       for (var i = 0; i < mutation.addedNodes.length; i++)
         if (mutation.addedNodes[i].id == 'source_code')
-          setUpPreviewPanel(mutation.addedNodes[i], functor);
+          setUpPreviewPanel(mutation.addedNodes[i], delegate);
     });
   });
   observer.observe(document, { childList: true, subtree: true });
