@@ -99,13 +99,18 @@ class VectorIcon {
     var y = parseFloat(params[1]);
     var width = parseFloat(params[2]);
     var height = parseFloat(params[3]);
-    var rx = parseFloat(params[4]);  // XXX: unused
+    var rx = parseFloat(params[4]);
+    // We can probably not add the arcs if rx == 0?
     var cmds = [
-      ['M', x, y],
-      ['h', width],
-      ['v', height],
-      ['h', -width],
-      ['v', -height]
+      ['M', x + rx, y],
+      ['h', width - rx - rx],
+      ['a', rx, rx, 0, 0, 1, rx, rx],
+      ['v', height - rx - rx],
+      ['a', rx, rx, 0, 0, 1, -rx, rx],
+      ['h', -(width - rx - rx)],
+      ['a', rx, rx, 0, 0, 1, -rx, -rx],
+      ['v', -(height - rx - rx)],
+      ['a', rx, rx, 0, 0, 1, rx, -rx]
     ];
     cmds.forEach(cmd => this.pathD_.push(cmd.join(' ')));
   }
