@@ -8,16 +8,18 @@
   display: flex;
   align-self: center;
   text-align: center;
-  max-height: 400px;
   min-width: 200px;
-  overflow: hidden
+  overflow: hidden;
 }
 
 #preview-scaled > svg > * {
   transform: scale(4);
 }
 
-#preview-original > svg, #preview-scaled > svg {
+#preview-original > svg,
+#preview-scaled > svg,
+#preview-original > img,
+#preview-scaled > img {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
