@@ -26,6 +26,7 @@ class VectorIcon {
     this.currentPath_ = null;
     this.pathD_ = [];
     this.clipRect_ = null;
+    this.finished_svg_ = null;
   }
 
   paint() {
@@ -124,9 +125,20 @@ class VectorIcon {
 
   processCommand(cmd) {
     if (cmd[0] == 'CANVAS_DIMENSIONS') {
-      this.svg_.setAttribute('width', cmd[1]);
-      this.svg_.setAttribute('height', cmd[1]);
+      if(this.finished_svg_ === null) {
+        this.svg_.setAttribute('width', cmd[1]);
+        this.svg_.setAttribute('height', cmd[1]);
+        // Start the svg (svg is not finished)
+        this.finished_svg_ = false;
+      } else if(this.finished_svg_ === false) {
+        // This is a new svg (previous is done)
+        this.finished_svg_ = true;
+      }
       return;
+    }
+
+    if(this.finished_svg_) {
+      return; // We already have an svg
     }
 
     if (cmd[0] == 'NEW_PATH') {
