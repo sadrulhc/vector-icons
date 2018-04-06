@@ -227,13 +227,18 @@ function updatePreviewIfVectorIcon(source_code, delegate, container) {
   original.innerHTML = '';
   original.appendChild(svg);
 
-  var scaled = container.querySelector('#preview-scaled');
-  scaled.innerHTML = '';
-  var scaledSvg = svg.cloneNode(true);
+  var svgSource = (new XMLSerializer).serializeToString(svg);
+
+  var scaledSvg = document.createElement('img');
   scaledSvg.setAttribute('width',
       parseFloat(svg.getAttribute('width')) * SCALE);
   scaledSvg.setAttribute('height',
       parseFloat(svg.getAttribute('height')) * SCALE);
+  scaledSvg.setAttribute('src',
+     'data:image/svg+xml;utf8,'+svgSource);
+
+  var scaled = container.querySelector('#preview-scaled');
+  scaled.innerHTML = '';
   scaled.appendChild(scaledSvg);
 }
 
